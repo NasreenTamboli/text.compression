@@ -1,0 +1,68 @@
+from collections import Counter
+
+def calculate_probabilities(text):
+    frequencies = Counter(text)
+    total = sum(frequencies.values())
+    probabilities = {char: freq / total for char, freq in frequencies.items()}
+    return probabilities
+
+def build_intervals(probabilities):
+    low = 0.0
+    intervals = {}
+    for char, prob in sorted(probabilities.items()):
+        high = low + prob
+        intervals[char] = (low, high)
+        low = high
+    return intervals
+
+def arithmetic_encode(text, intervals):
+    low = 0.0
+    high = 1.0
+
+    for char in text:
+        char_low, char_high = intervals[char]
+        range_ = high - low
+        high = low + range_ * char_high
+        low = low + range_ * char_low
+
+    # The encoded value can be any number in [low, high)
+    encoded_value = (low + high) / 2
+    return encoded_value
+
+def arithmetic_decode(encoded_value, intervals, length):
+    inverse_intervals = {char: (low, high) for char, (low, high) in intervals.items()}
+    decoded_text = ""
+
+    for _ in range(length):
+        for char, (low, high) in inverse_intervals.items():
+            if low <= encoded_value < high:
+                decoded_text += char
+                range_ = high - low
+                encoded_value = (encoded_value - low) / range_
+                break
+
+    return decoded_text
+
+# -------------------------------
+# Example execution
+# -------------------------------
+
+if __name__ == "__main__":
+    text = "Jain_Collage"
+    print(f"Original text: {text}")
+
+    # Step 1: Probability calculation
+    probabilities = calculate_probabilities(text)
+    print(f"Probabilities: {probabilities}")
+
+    # Step 2: Build intervals
+    intervals = build_intervals(probabilities)
+    print(f"Intervals: {intervals}")
+
+    # Step 3: Encode
+    encoded_value = arithmetic_encode(text, intervals)
+    print(f"Encoded value: {encoded_value}")
+
+    # Step 4: Decode
+    decoded_text = arithmetic_decode(encoded_value, intervals, len(text))
+    print(f"Decoded text: {decoded_text}")
